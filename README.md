@@ -276,3 +276,4 @@ For issues and feature requests, please open an issue in the repository.
 ---
 
 **EDU SPARK** - Empowering Education with AI 🚀
+
