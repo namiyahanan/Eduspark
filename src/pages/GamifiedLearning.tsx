@@ -1,275 +1,232 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
-import { Trophy, Star, Shield, Zap, Lock, ChevronRight, GraduationCap, Compass, BookOpen, Crown } from 'lucide-react';
-import ScrollReveal from '../components/ScrollReveal';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Trophy, Star, Zap, Lock, ChevronRight, GraduationCap, BookOpen, Crown, CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
 import { useStudent } from '../contexts/StudentContext';
-
-const subjectsData = {
-  Mathematics: {
-    theme: 'from-green-500 to-yellow-400',
-    icon: <Compass className="w-6 h-6" />,
-    levels: [
-      { id: 1, name: 'Foundation', x: 200, y: 100, completed: true, active: false, stars: 3 },
-      { id: 2, name: 'Algebra 101', x: 500, y: 250, completed: true, active: false, stars: 2 },
-      { id: 3, name: 'Geometric Logic', x: 300, y: 450, completed: false, active: true, stars: 0 },
-      { id: 4, name: 'Trig Masters', x: 600, y: 600, completed: false, active: false, stars: 0 },
-      { id: 5, name: 'Calculus Peak', x: 400, y: 800, completed: false, active: false, stars: 0 },
-    ]
-  },
-  Science: {
-    theme: 'from-green-400 to-pink-400',
-    icon: <Zap className="w-6 h-6" />,
-    levels: [
-      { id: 1, name: 'Matter Basics', x: 250, y: 150, completed: true, active: false, stars: 3 },
-      { id: 2, name: 'Forces in Motion', x: 450, y: 350, completed: false, active: true, stars: 0 },
-      { id: 3, name: 'Chemical Bonds', x: 200, y: 550, completed: false, active: false, stars: 0 },
-      { id: 4, name: 'Cellular World', x: 550, y: 700, completed: false, active: false, stars: 0 },
-    ]
-  },
-  English: {
-    theme: 'from-pink-500 to-rose-600',
-    icon: <BookOpen className="w-6 h-6" />,
-    levels: [
-      { id: 1, name: 'Grammar Core', x: 300, y: 100, completed: false, active: true, stars: 0 },
-      { id: 2, name: 'Creative Writing', x: 500, y: 300, completed: false, active: false, stars: 0 },
-      { id: 3, name: 'Literature Analysis', x: 350, y: 600, completed: false, active: false, stars: 0 },
-    ]
-  }
-};
-
-type SubjectKey = keyof typeof subjectsData;
+import { useLanguage } from '../contexts/LanguageContext';
+import { syllabusData } from '../data/syllabus';
+import { generatePracticeQuestions } from '../services/ai';
 
 export default function GamifiedLearning() {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { setActiveTopic } = useStudent();
+  const { studentInfo, recordTopicCompletion, recordTestAttempt } = useStudent();
+  const { t, language } = useLanguage();
   
-  const defaultSubject = location.state?.subject && Object.keys(subjectsData).includes(location.state.subject as string)
-    ? (location.state.subject as SubjectKey)
-    : 'Mathematics';
+  const [step, setStep] = useState<'subject' | 'chapter' | 'level' | 'quiz' | 'result'>('subject');
+  const [selectedSubject, setSelectedSubject] = useState<string>('');
+  const [selectedChapter, setSelectedChapter] = useState<string>('');
+  const [activeLevel, setActiveLevel] = useState<number>(1);
+  
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [currentQIndex, setCurrentQIndex] = useState(0);
+  const [score, setScore] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  const grade = studentInfo?.grade || 'Class 10';
+  const subjects = Object.keys(syllabusData[grade] || syllabusData['Class 10']);
+
+  const startQuiz = async (level: number) => {
+    setActiveLevel(level);
+    setLoading(true);
+    setStep('quiz');
+    setScore(0);
+    setCurrentQIndex(0);
     
-  const [activeSubject, setActiveSubject] = useState<SubjectKey>(defaultSubject);
-
-  const currentSubjectData = subjectsData[activeSubject];
-  const levels = currentSubjectData.levels;
-
-  const launchLevel = (level = levels.find(l => l.active) || levels[0]) => {
-    if (!level.completed && !level.active) return;
-    setActiveTopic(level.name, activeSubject);
-    navigate(`/app/practice/${encodeURIComponent(activeSubject)}/${encodeURIComponent(level.name)}`, { state: { topic: level.name, subject: activeSubject } });
+    try {
+      const difficulty = level <= 2 ? 'easy' : level <= 4 ? 'medium' : 'hard';
+      const qData = await generatePracticeQuestions(selectedChapter, selectedSubject, difficulty, 10);
+      setQuestions(qData);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => {
-    const activeLevel = levels.find(l => l.active);
-    if (activeLevel && scrollRef.current) {
-      scrollRef.current.scrollTop = activeLevel.y - 200;
+  const handleAnswer = (index: number) => {
+    if (index === questions[currentQIndex].correctIndex) {
+      setScore(score + 10);
     }
-  }, [activeSubject, levels]);
+    
+    if (currentQIndex < questions.length - 1) {
+      setCurrentQIndex(currentQIndex + 1);
+    } else {
+      setStep('result');
+      recordTestAttempt(score);
+      if (score >= 40) recordTopicCompletion(selectedChapter);
+    }
+  };
 
   return (
-    <div className="p-6 lg:p-10 max-w-7xl mx-auto w-full pb-24 lg:pb-10 min-h-screen text-white/80 overflow-hidden">
-      <ScrollReveal direction="up" delay={0.1} className="mb-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-          <div>
-            <div className="flex items-center gap-3 mb-3">
-               <GraduationCap className="w-8 h-8 text-primary" />
-               <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Quest Protocol</span>
-            </div>
-            <h2 className="text-5xl lg:text-6xl font-black text-white tracking-tighter">Learning Path.</h2>
+    <div className="p-6 lg:p-10 max-w-7xl mx-auto w-full pb-24 lg:pb-10 min-h-screen text-white/80">
+      
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+        <div>
+          <div className="flex items-center gap-3 mb-3">
+             <GraduationCap className="w-8 h-8 text-primary" />
+             <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">{t('Level')} {activeLevel}</span>
           </div>
-          
-          <div className="flex gap-4">
-             <div className="bg-white/5 backdrop-blur-xl px-6 py-4 rounded-3xl border border-white/10 flex items-center gap-3 shadow-2xl">
-                <Crown className="w-5 h-5 text-yellow-400" />
-                <span className="font-black text-white text-lg tracking-tight">Level 24</span>
-             </div>
-             <div className="bg-white/5 backdrop-blur-xl px-6 py-4 rounded-3xl border border-white/10 flex items-center gap-3 shadow-2xl">
-                <Zap className="w-5 h-5 text-primary" />
-                <span className="font-black text-white text-lg tracking-tight">12.4k XP</span>
-             </div>
-          </div>
+          <h2 className="text-5xl lg:text-6xl font-black text-white tracking-tighter">
+            {step === 'subject' ? t('Select Subject') : step === 'chapter' ? t('Select Chapter') : selectedChapter}
+          </h2>
         </div>
-      </ScrollReveal>
-
-      {/* Subject Selector */}
-      <div className="flex overflow-x-auto gap-4 mb-10 pb-4 scrollbar-hide">
-        {(Object.keys(subjectsData) as SubjectKey[]).map((subject) => (
-          <button
-            key={subject}
-            onClick={() => setActiveSubject(subject)}
-            className={`flex items-center gap-3 px-6 py-4 rounded-3xl font-bold whitespace-nowrap transition-all border ${
-              activeSubject === subject 
-                ? `bg-gradient-to-r ${subjectsData[subject].theme} text-white border-transparent shadow-lg scale-105` 
-                : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            {subjectsData[subject].icon}
-            {subject}
-          </button>
-        ))}
-      </div>
-
-      {/* Main Quest Arena */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         
-        {/* The Winding Map */}
-        <div className="lg:col-span-8 bg-white/5 backdrop-blur-xl rounded-[4rem] border border-white/10 shadow-2xl relative overflow-hidden h-[700px]">
-           <div className={`absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none bg-gradient-to-br ${currentSubjectData.theme} mix-blend-overlay`}></div>
-
-           <div ref={scrollRef} className="absolute inset-0 overflow-y-auto overflow-x-hidden p-10 scrollbar-hide scroll-smooth">
-              <div className="relative w-full h-[1000px]">
-                {/* SVG Path */}
-                <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 800 1000">
-                   <motion.path
-                     key={`${activeSubject}-path-bg`}
-                     d={`M ${levels[0].x} ${levels[0].y} ` + levels.slice(1).map(l => `T ${l.x} ${l.y}`).join(' ')}
-                     fill="none"
-                     stroke="rgba(255, 255, 255, 0.1)"
-                     strokeWidth="12"
-                     strokeLinecap="round"
-                   />
-                   <motion.path
-                     key={`${activeSubject}-path-active`}
-                     d={`M ${levels[0].x} ${levels[0].y} ` + levels.slice(1).map(l => `T ${l.x} ${l.y}`).join(' ')}
-                     fill="none"
-                     stroke="url(#pathGradient)"
-                     strokeWidth="12"
-                     strokeLinecap="round"
-                     strokeDasharray="0 1"
-                     initial={{ pathLength: 0 }}
-                     animate={{ pathLength: 0.6 }}
-                     transition={{ duration: 2, ease: "easeInOut" }}
-                   />
-                   <defs>
-                      <linearGradient id="pathGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                         <stop offset="0%" stopColor="#16a34a" />
-                         <stop offset="100%" stopColor="#ec4899" />
-                      </linearGradient>
-                   </defs>
-                </svg>
-
-                {/* Level Nodes */}
-                <AnimatePresence mode="popLayout">
-                  {levels.map((level, idx) => (
-                    <motion.div
-                      key={`${activeSubject}-${level.id}`}
-                      initial={{ opacity: 0, scale: 0, y: 50 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0 }}
-                      transition={{ delay: idx * 0.15, type: 'spring' }}
-                      style={{ left: level.x, top: level.y }}
-                      className="absolute -translate-x-1/2 -translate-y-1/2 z-10"
-                    >
-                      <motion.button
-                        whileHover={{ scale: 1.15, rotate: level.completed ? 0 : 5 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => launchLevel(level)}
-                        type="button"
-                        className={`relative w-24 h-24 rounded-[2rem] flex items-center justify-center border-4 transition-all shadow-2xl ${
-                          level.completed 
-                            ? `bg-gradient-to-br ${currentSubjectData.theme} border-white/20 text-white` 
-                            : level.active 
-                              ? 'bg-black border-primary text-primary animate-[pulse_2s_infinite]' 
-                              : 'bg-white/5 border-white/10 text-white/20 backdrop-blur-md'
-                        }`}
-                      >
-                        {level.completed ? (
-                          <div className="flex flex-col items-center">
-                            <Trophy className="w-8 h-8" />
-                            <div className="flex mt-1">
-                              {[1, 2, 3].map(s => (
-                                <Star key={s} className={`w-3 h-3 ${s <= level.stars ? 'fill-yellow-400 text-yellow-400' : 'opacity-20'}`} />
-                              ))}
-                            </div>
-                          </div>
-                        ) : level.active ? (
-                          <div className="flex flex-col items-center">
-                            <Zap className="w-8 h-8 fill-primary" />
-                            <span className="text-[10px] font-black uppercase mt-1">START</span>
-                          </div>
-                        ) : (
-                          <Lock className="w-8 h-8" />
-                        )}
-
-                        {/* Label */}
-                        <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-center bg-black/60 px-3 py-1 rounded-full backdrop-blur-sm border border-white/5">
-                           <p className={`font-bold uppercase tracking-wider text-[10px] ${level.active ? 'text-primary' : 'text-white/60'}`}>
-                             {level.name}
-                          </p>
-                        </div>
-                      </motion.button>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
+        <div className="flex gap-4">
+           <div className="bg-white/5 backdrop-blur-xl px-6 py-4 rounded-3xl border border-white/10 flex items-center gap-3 shadow-2xl">
+              <Crown className="w-5 h-5 text-yellow-400" />
+              <span className="font-black text-white text-lg tracking-tight">XP: {score * 10}</span>
+           </div>
+           <div className="bg-white/5 backdrop-blur-xl px-6 py-4 rounded-3xl border border-white/10 flex items-center gap-3 shadow-2xl">
+              <Zap className="w-5 h-5 text-primary" />
+              <span className="font-black text-white text-lg tracking-tight">{t('Progress')}: {score}%</span>
            </div>
         </div>
-
-        {/* Sidebar Info */}
-        <div className="lg:col-span-4 space-y-8">
-           <motion.div 
-             initial={{ opacity: 0, x: 50 }}
-             animate={{ opacity: 1, x: 0 }}
-             key={`${activeSubject}-stats`}
-             className="bg-white/5 backdrop-blur-xl rounded-[3rem] p-8 border border-white/10 shadow-2xl"
-           >
-              <h3 className="text-2xl font-black text-white mb-8 flex items-center gap-4">
-                 <Shield className="w-7 h-7 text-primary" />
-                 {activeSubject} Mastery
-              </h3>
-              <div className="space-y-8">
-                 <div className="space-y-3">
-                    <div className="flex justify-between items-end">
-                       <span className="text-xs font-black text-white/40 uppercase tracking-widest">Subject Progress</span>
-                       <span className="text-sm font-black text-primary">
-                         {Math.round((levels.filter(l => l.completed).length / levels.length) * 100)}%
-                       </span>
-                    </div>
-                    <div className="w-full bg-black/50 rounded-full h-3 p-1 border border-white/5 overflow-hidden">
-                       <motion.div 
-                         initial={{ width: 0 }}
-                         animate={{ width: `${(levels.filter(l => l.completed).length / levels.length) * 100}%` }}
-                         transition={{ duration: 1, delay: 0.5 }}
-                         className={`h-full rounded-full bg-gradient-to-r ${currentSubjectData.theme} shadow-[0_0_15px_rgba(22,163,74,0.35)]`}
-                       />
-                    </div>
-                 </div>
-
-                 <div className="grid grid-cols-2 gap-4 pt-4">
-                    <div className="bg-white/5 p-6 rounded-3xl border border-white/5 text-center">
-                       <p className="text-3xl font-black text-white">{levels.length}</p>
-                       <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-2">Lessons</p>
-                    </div>
-                    <div className="bg-white/5 p-6 rounded-3xl border border-white/5 text-center">
-                       <p className="text-3xl font-black text-yellow-400">
-                         {levels.reduce((acc, l) => acc + (l.stars || 0), 0)}
-                       </p>
-                       <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-2">Stars</p>
-                    </div>
-                 </div>
-              </div>
-           </motion.div>
-
-           <motion.div 
-             whileHover={{ scale: 1.02, y: -5 }}
-             className={`bg-gradient-to-br ${currentSubjectData.theme} p-8 rounded-[3rem] text-white shadow-2xl relative overflow-hidden`}
-           >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl"></div>
-              <h3 className="text-2xl font-black mb-4 tracking-tighter relative z-10">Next Challenge</h3>
-              <p className="text-white/80 font-medium mb-8 relative z-10">
-                Continue your journey in {activeSubject}. The next lesson is waiting!
-              </p>
-              <button
-                onClick={() => launchLevel()}
-                className="w-full bg-white text-black py-4 rounded-full font-black text-sm uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all relative z-10"
-              >
-                 Enter Arena <ChevronRight className="w-5 h-5" />
-              </button>
-           </motion.div>
-        </div>
       </div>
+
+      <AnimatePresence mode="wait">
+        
+        {/* Step 1: Subject Selection */}
+        {step === 'subject' && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {subjects.map((sub) => (
+              <button
+                key={sub}
+                onClick={() => { setSelectedSubject(sub); setStep('chapter'); }}
+                className="group bg-white/5 border border-white/10 p-10 rounded-[3rem] text-left hover:border-primary/40 transition-all hover:bg-white/10 relative overflow-hidden"
+              >
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <BookOpen className="w-8 h-8" />
+                </div>
+                <h3 className="text-3xl font-black text-white mb-2">{sub}</h3>
+                <p className="text-white/40 font-bold uppercase tracking-widest text-[10px]">10 {t('Chapters')}</p>
+                <ChevronRight className="absolute bottom-10 right-10 w-8 h-8 text-white/10 group-hover:text-primary group-hover:translate-x-2 transition-all" />
+              </button>
+            ))}
+          </motion.div>
+        )}
+
+        {/* Step 2: Chapter Selection */}
+        {step === 'chapter' && (
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+            <button onClick={() => setStep('subject')} className="flex items-center gap-2 text-white/40 hover:text-white font-black uppercase text-xs tracking-widest mb-4">
+              <ArrowLeft className="w-4 h-4" /> {t('Back')}
+            </button>
+            <div className="grid md:grid-cols-2 gap-4">
+              {syllabusData[grade]?.[selectedSubject]?.units.map((unit: any) => 
+                unit.topics.map((topic: any) => {
+                  const topicName = typeof topic === 'string' ? topic : topic.name;
+                  return (
+                    <button
+                      key={topicName}
+                      onClick={() => { setSelectedChapter(topicName); setStep('level'); }}
+                      className="flex items-center justify-between p-6 bg-white/5 border border-white/10 rounded-3xl hover:border-primary/50 transition-all group"
+                    >
+                      <span className="text-xl font-black text-white/80 group-hover:text-white">{topicName}</span>
+                      <ChevronRight className="w-6 h-6 text-white/20 group-hover:text-primary" />
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step 3: Level Selection */}
+        {step === 'level' && (
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center py-10">
+            <div className="grid grid-cols-1 gap-8 w-full max-w-md">
+              {[1, 2, 3, 4, 5].map((lvl) => {
+                const isUnlocked = lvl === 1 || (studentInfo?.performance?.topicsCompleted || 0) >= (lvl - 1) * 2;
+                const isActive = isUnlocked && lvl === activeLevel;
+                
+                return (
+                  <button
+                    key={lvl}
+                    disabled={!isUnlocked}
+                    onClick={() => startQuiz(lvl)}
+                    className={`relative flex items-center justify-between p-8 rounded-[2.5rem] border-2 transition-all group ${
+                      isUnlocked 
+                        ? 'bg-primary/20 border-primary text-white shadow-[0_0_50px_rgba(74,222,128,0.2)]' 
+                        : 'bg-white/5 border-white/10 text-white/20 cursor-not-allowed'
+                    } ${isActive ? 'ring-2 ring-primary ring-offset-4 ring-offset-black' : ''}`}
+                  >
+                    <div className="flex items-center gap-6">
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-2xl ${isUnlocked ? 'bg-primary text-black' : 'bg-white/10'}`}>
+                        {lvl}
+                      </div>
+                      <div className="text-left">
+                        <h4 className="text-2xl font-black tracking-tight">{t('Level')} {lvl}</h4>
+                        <p className="text-[10px] font-black uppercase tracking-widest opacity-60">10 {t('Questions')} • 100 {t('Score')}</p>
+                      </div>
+                    </div>
+                    {!isUnlocked ? <Lock className="w-6 h-6 text-white/20" /> : <ChevronRight className="w-8 h-8 text-primary group-hover:translate-x-2 transition-all" />}
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step 4: Quiz Mode */}
+        {step === 'quiz' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-3xl mx-auto w-full">
+            {loading ? (
+              <div className="h-[400px] flex flex-col items-center justify-center text-center">
+                <div className="w-20 h-20 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-6" />
+                <p className="text-white/40 font-black uppercase tracking-widest">{t('Initialize Session.')}</p>
+              </div>
+            ) : (
+              <div className="space-y-10">
+                <div className="flex justify-between items-end">
+                   <p className="text-primary font-black uppercase tracking-widest text-xs">{t('Question')} {currentQIndex + 1}/10</p>
+                   <p className="text-white/40 font-black text-3xl">{score}</p>
+                </div>
+                <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                   <motion.div initial={{ width: 0 }} animate={{ width: `${((currentQIndex + 1) / 10) * 100}%` }} className="h-full bg-primary" />
+                </div>
+                
+                <h3 className="text-3xl md:text-4xl font-black text-white leading-tight">
+                  {questions[currentQIndex]?.question}
+                </h3>
+
+                <div className="grid gap-4">
+                  {questions[currentQIndex]?.options.map((opt: string, i: number) => (
+                    <button
+                      key={i}
+                      onClick={() => handleAnswer(i)}
+                      className="w-full text-left p-6 rounded-3xl bg-white/5 border border-white/10 hover:border-primary/50 hover:bg-white/10 transition-all font-bold text-lg text-white/80 hover:text-white"
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* Step 5: Result Screen */}
+        {step === 'result' && (
+          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-40 h-40 rounded-[3rem] bg-primary text-black flex items-center justify-center shadow-[0_0_80px_rgba(74,222,128,0.4)] mb-10">
+               <Trophy className="w-20 h-20" />
+            </div>
+            <h2 className="text-6xl font-black text-white tracking-tighter mb-4">{score >= 40 ? t('Quiz Complete!') : 'Keep Trying!'}</h2>
+            <p className="text-3xl font-black text-primary mb-12">{t('Your Marks:')} {score}/100</p>
+            
+            <div className="flex gap-4">
+               <button onClick={() => setStep('subject')} className="px-10 py-5 bg-white text-black rounded-full font-black text-lg uppercase tracking-widest hover:bg-primary transition-all">
+                  {t('Finish Quiz')}
+               </button>
+               {score >= 40 && (
+                 <button onClick={() => startQuiz(activeLevel + 1)} className="px-10 py-5 bg-primary/10 border border-primary text-primary rounded-full font-black text-lg uppercase tracking-widest hover:bg-primary hover:text-black transition-all">
+                    {t('Next Question')}
+                 </button>
+               )}
+            </div>
+          </motion.div>
+        )}
+
+      </AnimatePresence>
     </div>
   );
 }

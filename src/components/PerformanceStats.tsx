@@ -1,7 +1,7 @@
 import { BarChart3, TrendingUp, Target, Zap } from 'lucide-react';
 import { useStudent } from '../contexts/StudentContext';
 import { calculateProgress } from '../utils/helpers';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
 
 interface StatsCardProps {

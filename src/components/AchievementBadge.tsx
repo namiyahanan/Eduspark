@@ -1,5 +1,5 @@
 import { Trophy, Zap, Star, Target, BookOpen, Rocket } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
 
 export interface Achievement {

@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FileText, 
   Settings, 
@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import ScrollReveal from '../components/ScrollReveal';
 import { useStudent } from '../contexts/StudentContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { syllabusData } from '../data/syllabus';
 import { generateQuestionPaper } from '../services/ai';
 import { cleanAIOutput } from '../utils/helpers';
@@ -43,6 +44,7 @@ const getTopicName = (topic: string | { name: string }) => typeof topic === 'str
 
 export default function PaperGen() {
   const { studentInfo } = useStudent();
+  const { t } = useLanguage();
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPaper, setGeneratedPaper] = useState<GeneratedPaper | null>(null);
   const [config, setConfig] = useState({
@@ -104,18 +106,18 @@ export default function PaperGen() {
     // Header
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
-    const title = generatedPaper.header?.title || 'EXAMINATION 2025-26';
+    const title = generatedPaper.header?.title || t('SCHOOL EXAMINATION 2025-26');
     doc.text(title, pageWidth / 2, currentY, { align: 'center' });
     currentY += 10;
 
     doc.setFontSize(12);
-    doc.text(`${generatedPaper.header?.board || config.board} - ${config.subject}`, pageWidth / 2, currentY, { align: 'center' });
+    doc.text(`${generatedPaper.header?.board || config.board} - ${t(config.subject)}`, pageWidth / 2, currentY, { align: 'center' });
     currentY += 15;
 
     // Marks and Time
     doc.setFontSize(10);
-    doc.text(`Time: ${config.time} Minutes`, margin, currentY);
-    doc.text(`Maximum Marks: ${config.totalMarks}`, pageWidth - margin, currentY, { align: 'right' });
+    doc.text(`${t('Time')}: ${config.time} ${t('Minutes')}`, margin, currentY);
+    doc.text(`${t('Maximum Marks')}: ${config.totalMarks}`, pageWidth - margin, currentY, { align: 'right' });
     currentY += 5;
     doc.line(margin, currentY, pageWidth - margin, currentY);
     currentY += 15;
@@ -169,7 +171,7 @@ export default function PaperGen() {
           </div>
           <div>
             <h2 className="text-2xl font-black text-white tracking-tighter">PaperGen.</h2>
-            <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Advanced Exam Factory</p>
+            <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">{t('Advanced Exam Factory')}</p>
           </div>
         </div>
 

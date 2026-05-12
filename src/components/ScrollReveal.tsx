@@ -1,4 +1,4 @@
-import { motion, type Variants } from 'motion/react';
+import { motion, type Variants } from 'framer-motion';
 import { type Key, type ReactNode } from 'react';
 
 type ScrollRevealDirection = 'up' | 'down' | 'left' | 'right' | 'none';

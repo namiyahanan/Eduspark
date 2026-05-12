@@ -1,15 +1,18 @@
 import { useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, BookOpen, Layers, RotateCcw, Sparkles } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useStudent } from '../contexts/StudentContext';
 import { syllabusData } from '../data/syllabus';
+
+import { useLanguage } from '../contexts/LanguageContext';
 
 const getTopicName = (topic: string | { name: string }) => typeof topic === 'string' ? topic : topic.name;
 const getSubtopics = (topic: string | { subtopics?: string[] }) => typeof topic === 'string' ? [] : topic.subtopics || [];
 
 export default function Flashcards() {
   const { studentInfo } = useStudent();
+  const { t } = useLanguage();
   const grade = studentInfo?.grade || 'Class 10';
   const syllabus = syllabusData[grade] || syllabusData['Class 10'];
   const subjects = Object.keys(syllabus);
@@ -31,19 +34,19 @@ export default function Flashcards() {
     const baseCards = [
       {
         front: activeChapter,
-        back: `Start with the core definition, key formula or rule, and one solved example from ${subject}.`,
+        back: `${t('Start with the core definition, key formula or rule, and one solved example from')} ${t(subject)}.`,
       },
       ...subtopics.map((subtopic) => ({
         front: subtopic,
-        back: `Explain how "${subtopic}" connects to ${activeChapter}, then solve one short question before moving on.`,
+        back: `${t('Explain how')} "${subtopic}" ${t('connects to')} ${activeChapter}, ${t('then solve one short question before moving on.')}`,
       })),
       {
-        front: 'Exam Check',
-        back: `Write two likely exam questions from ${activeChapter} and mark the steps where students usually lose marks.`,
+        front: t('Exam Check'),
+        back: `${t('Write two likely exam questions from')} ${activeChapter} ${t('and mark the steps where students usually lose marks.')}`,
       },
     ];
     return baseCards;
-  }, [activeChapter, subject, syllabus]);
+  }, [activeChapter, subject, syllabus, t]);
 
   const currentCard = flashcards[cardIndex] || flashcards[0];
 
@@ -64,9 +67,9 @@ export default function Flashcards() {
     <div className="p-4 md:p-6 lg:p-10 max-w-7xl mx-auto w-full pb-24 min-h-screen">
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-10">
         <div>
-          <p className="text-primary text-[10px] uppercase tracking-[0.3em] font-black mb-3">Flashcard Learning</p>
-          <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter">Flip through the chapter.</h1>
-          <p className="text-white/50 text-lg mt-4 max-w-2xl">Choose a subject and chapter, then use animated cards for quick recall and revision.</p>
+          <p className="text-primary text-[10px] uppercase tracking-[0.3em] font-black mb-3">{t('Flashcard Learning')}</p>
+          <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter">{t('Flip through the chapter.')}</h1>
+          <p className="text-white/50 text-lg mt-4 max-w-2xl">{t('Choose a subject and chapter, then use animated cards for quick recall and revision.')}</p>
         </div>
         <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-3xl px-5 py-4">
           <Layers className="w-6 h-6 text-primary" />
@@ -77,20 +80,20 @@ export default function Flashcards() {
       <div className="grid lg:grid-cols-[320px_1fr] gap-8">
         <aside className="bg-white/5 border border-white/10 rounded-[2rem] p-5 h-fit">
           <label className="block mb-5">
-            <span className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-black mb-2 block">Subject</span>
+            <span className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-black mb-2 block">{t('Subject')}</span>
             <select
               value={subject}
               onChange={(event) => selectSubject(event.target.value)}
               className="w-full bg-black/30 border border-white/10 rounded-2xl px-4 py-3 text-white font-bold outline-none focus:border-primary/50"
             >
               {subjects.map((item) => (
-                <option key={item} value={item}>{item}</option>
+                <option key={item} value={item}>{t(item)}</option>
               ))}
             </select>
           </label>
 
           <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-black mb-3">Chapter</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-black mb-3">{t('Chapter')}</p>
             <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
               {chapters.map((item) => (
                 <button
@@ -117,13 +120,13 @@ export default function Flashcards() {
         <section className="bg-white/5 border border-white/10 rounded-[3rem] p-5 md:p-10 min-h-[560px] flex flex-col">
           <div className="flex items-center justify-between gap-4 mb-8">
             <div>
-              <p className="text-primary text-xs uppercase tracking-[0.2em] font-black">{subject}</p>
+              <p className="text-primary text-xs uppercase tracking-[0.2em] font-black">{t(subject)}</p>
               <h2 className="text-3xl md:text-4xl font-black text-white tracking-tighter">{activeChapter}</h2>
             </div>
             <button
               onClick={() => setIsFlipped((value) => !value)}
               className="p-4 rounded-2xl bg-white/5 border border-white/10 text-white/70 hover:text-primary hover:border-primary/35 transition-all"
-              aria-label="Flip card"
+              aria-label={t('Flip card')}
             >
               <RotateCcw className="w-5 h-5" />
             </button>
@@ -147,7 +150,7 @@ export default function Flashcards() {
                 <div className="flex items-center gap-3 mb-8">
                   {isFlipped ? <Sparkles className="w-7 h-7" /> : <BookOpen className="w-7 h-7 text-primary" />}
                   <span className={clsx('text-[10px] uppercase tracking-[0.25em] font-black', isFlipped ? 'text-black/60' : 'text-primary')}>
-                    {isFlipped ? 'Answer' : 'Prompt'}
+                    {isFlipped ? t('Answer') : t('Prompt')}
                   </span>
                 </div>
                 <p className="text-3xl md:text-5xl font-black tracking-tighter leading-tight">
@@ -163,13 +166,13 @@ export default function Flashcards() {
               className="inline-flex items-center gap-2 px-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-black hover:border-primary/35 transition-all"
             >
               <ArrowLeft className="w-5 h-5" />
-              Previous
+              {t('Previous')}
             </button>
             <button
               onClick={() => moveCard(1)}
               className="inline-flex items-center gap-2 px-5 py-4 rounded-2xl bg-primary text-black font-black hover:bg-white transition-all"
             >
-              Next
+              {t('Next')}
               <ArrowRight className="w-5 h-5" />
             </button>
           </div>

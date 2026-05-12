@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { 
   Play, Download, ArrowRight, GraduationCap, 
   Gamepad2, CheckCircle2, Sparkles, MessageSquare 

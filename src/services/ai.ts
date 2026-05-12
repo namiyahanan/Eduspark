@@ -1,8 +1,11 @@
 import { cleanAIOutput } from '../utils/helpers';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const API_KEY = (import.meta as any).env.VITE_AI_API_KEY || '';
-const MODEL = (import.meta as any).env.VITE_AI_MODEL || 'qwen/qwen-2.5-coder-32b';
-const BASE_URL = (import.meta as any).env.VITE_AI_BASE_URL || 'https://integrate.api.nvidia.com/v1';
+const API_KEY = (import.meta as any).env.VITE_GEMINI_API_KEY || '';
+const MODEL = (import.meta as any).env.VITE_AI_MODEL || 'gemini-1.5-flash';
+
+// Initialize Gemini
+const genAI = new GoogleGenerativeAI(API_KEY);
 
 async function retryCall<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
   let lastError: Error | null = null;
@@ -48,39 +51,23 @@ async function callAI(prompt: string, jsonMode = false, isExpertMode = false) {
   }
 
   return retryCall(async () => {
-    const response = await fetch(`${BASE_URL}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        Authorization: `Bearer ${API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          {
-            role: 'system',
-            content: isExpertMode 
-              ? NCERT_SYSTEM_PROMPT 
-              : (jsonMode
-                ? 'Return only valid JSON. Do not include markdown fences or commentary.'
-                : 'You are an expert educational assistant helping students learn effectively.'),
-          },
-          { role: 'user', content: prompt },
-        ],
-        temperature: 0.2,
-        max_tokens: 1200,
-      }),
+    const model = genAI.getGenerativeModel({ 
+      model: MODEL,
+      systemInstruction: isExpertMode 
+        ? NCERT_SYSTEM_PROMPT 
+        : (jsonMode
+          ? 'Return only valid JSON. Do not include markdown fences or commentary.'
+          : 'You are an expert educational assistant helping students learn effectively.'),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || `API error: ${response.status}`);
-    }
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let text = response.text().trim();
 
-    const data = await response.json();
-    const rawText = data.choices?.[0]?.message?.content || '';
-    const text = rawText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+    // Clean up JSON if requested
+    if (jsonMode) {
+      text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+    }
 
     const finalResult = jsonMode ? text : cleanAIOutput(text);
     apiCache.set(cacheKey, finalResult);
@@ -99,7 +86,7 @@ export async function generateLessonContent(topic: string, subject: string) {
   try {
     // 1. Try to fetch from our local NCERT backend first (Indexed from LearnCBSE)
     try {
-      const backendResponse = await fetch('http://localhost:5000/api/ncert-search', {
+      const backendResponse = await fetch('/api/ncert-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: topic, subject: subject })

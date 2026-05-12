@@ -1,11 +1,16 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Initialize Gemini AI
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 app.use(cors());
 app.use(express.json());
@@ -78,7 +83,7 @@ app.get('/api/lessons', (req, res) => {
 });
 
 // Search Endpoint (Updated to use mapping)
-app.post('/api/ncert-search', (req, res) => {
+app.post('/api/ncert-search', async (req, res) => {
   const { query, subject } = req.body;
   const normalizedSubject = subjectMap[subject] || subject?.toLowerCase();
   
@@ -123,10 +128,33 @@ app.post('/api/ncert-search', (req, res) => {
   }
 
   console.log(`[Fallback] No indexed content for "${query}". Falling back to AI.`);
-  res.status(404).json({ 
-    success: false, 
-    message: "No indexed solution found." 
-  });
+  
+  try {
+    const prompt = `You are an NCERT 10th Expert. Provide a detailed step-by-step solution for: "${query}" in subject: "${subject}". 
+    Format the response clearly with Question, Concept, Steps, and Final Answer.`;
+    
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    return res.json({ 
+      success: true, 
+      source: 'Gemini AI', 
+      type: 'solution',
+      data: {
+        question: query,
+        concept: "AI Generated Solution",
+        steps: text.split('\n').filter(line => line.trim() !== ''),
+        answer: "See steps above"
+      } 
+    });
+  } catch (error) {
+    console.error('Gemini AI Error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: "AI generation failed." 
+    });
+  }
 });
 
 app.listen(PORT, () => {

@@ -22,6 +22,7 @@ const GamifiedLearning = React.lazy(() => import('./pages/GamifiedLearning'));
 const Courses = React.lazy(() => import('./pages/Courses'));
 const Doubts = React.lazy(() => import('./pages/Doubts'));
 const Login = React.lazy(() => import('./pages/Login'));
+const Signup = React.lazy(() => import('./pages/Signup'));
 const Home = React.lazy(() => import('./pages/Home'));
 const StudyPlansPage = React.lazy(() => import('./pages/StudyPlansPage'));
 
@@ -40,17 +41,21 @@ const PageLoader = () => (
   </div>
 );
 
+import { LanguageProvider } from './contexts/LanguageContext';
+
 export default function App() {
   return (
-    <StudentProvider>
-      <ThemeProvider>
-        <NotificationProvider>
+    <LanguageProvider>
+      <StudentProvider>
+        <ThemeProvider>
+          <NotificationProvider>
           <BrowserRouter>
             <NotificationCenter />
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
                 <Route path="/app" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                   <Route index element={<Dashboard />} />
                   <Route path="courses" element={<Courses />} />
@@ -70,5 +75,6 @@ export default function App() {
         </NotificationProvider>
       </ThemeProvider>
     </StudentProvider>
+    </LanguageProvider>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { motion, useSpring } from 'motion/react';
+import { motion, useSpring } from 'framer-motion';
 import { Pen } from 'lucide-react';
 
 export default function CustomCursor() {

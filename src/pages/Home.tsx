@@ -1,19 +1,37 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
-import { ArrowRight, BarChart3, BookOpen, CheckCircle2, GraduationCap, Menu, MessagesSquare, Moon, PlayCircle, ShieldCheck, Sparkles, Sun, Trophy, X, Zap } from 'lucide-react';
-import { courseCatalog } from '../data/learningContent';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Zap, 
+  Sun, 
+  Moon, 
+  X, 
+  Menu, 
+  GraduationCap, 
+  ArrowRight, 
+  BookOpen, 
+  PlayCircle, 
+  Sparkles, 
+  ShieldCheck, 
+  MessagesSquare, 
+  BarChart3, 
+  Trophy, 
+  CheckCircle2 
+} from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { courseCatalog } from '../data/learningContent';
 
 export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { t } = useLanguage();
   const featuredCourses = courseCatalog.slice(0, 4);
   const navLinks = [
-    { name: 'Courses', href: '#courses' },
-    { name: 'Live Classes', href: '#live' },
-    { name: 'Doubts', href: '#doubts' },
-    { name: 'Results', href: '#results' },
+    { name: t('Courses'), href: '#courses' },
+    { name: t('Live Classes'), href: '#live' },
+    { name: t('Doubts'), href: '#doubts' },
+    { name: t('Results'), href: '#results' },
   ];
 
   return (
@@ -48,10 +66,10 @@ export default function Home() {
                 {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
               <Link to="/login" className="px-5 py-3 rounded-2xl bg-white/5 border border-white/10 font-black hover:bg-white/10 transition-all">
-                Log in
+                {t('Log in')}
               </Link>
-              <Link to="/login" className="px-5 py-3 rounded-2xl bg-primary text-black font-black hover:bg-white transition-all">
-                Start free
+              <Link to="/signup" className="px-5 py-3 rounded-2xl bg-primary text-black font-black hover:bg-white transition-all">
+                {t('Start free')}
               </Link>
             </div>
 
@@ -70,7 +88,7 @@ export default function Home() {
                     {link.name}
                   </a>
                 ))}
-                <Link to="/login" className="mt-2 px-4 py-3 rounded-2xl bg-primary text-black font-black text-center">Start free</Link>
+                <Link to="/signup" className="mt-2 px-4 py-3 rounded-2xl bg-primary text-black font-black text-center">{t('Start free')}</Link>
               </div>
             </motion.div>
           )}
@@ -80,22 +98,22 @@ export default function Home() {
           <div>
             <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/25 text-primary text-xs uppercase tracking-[0.25em] font-black mb-7">
               <GraduationCap className="w-4 h-4" />
-              Classes 6-12 - CBSE, ICSE, State Boards
+              {t('Classes 6-12 - CBSE, ICSE, State Boards')}
             </motion.div>
             <motion.h1 initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }} className="text-5xl md:text-7xl xl:text-8xl font-black tracking-tighter leading-[0.94] max-w-5xl">
               EDU SPARK
-              <span className="block text-primary">Learn like toppers revise.</span>
+              <span className="block text-primary">{t('Learn like toppers revise.')}</span>
             </motion.h1>
             <motion.p initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="text-lg md:text-xl text-white/60 max-w-2xl mt-7 leading-8">
-              Animated lessons, live teacher rooms, instant doubt solving, adaptive practice, analytics, rewards, and exam paper generation in one student app.
+              {t('Animated lessons, live teacher rooms, instant doubt solving, adaptive practice, analytics, rewards, and exam paper generation in one student app.')}
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }} className="flex flex-col sm:flex-row gap-3 mt-9">
-              <Link to="/login" className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-primary to-pink-500 text-black px-7 py-4 rounded-2xl font-black text-lg hover:shadow-[0_0_30px_rgba(22,163,74,0.35)] transition-all transform hover:-translate-y-1">
-                Build my plan
+              <Link to="/signup" className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-primary to-pink-500 text-black px-7 py-4 rounded-2xl font-black text-lg hover:shadow-[0_0_30px_rgba(22,163,74,0.35)] transition-all transform hover:-translate-y-1">
+                {t('Build my plan')}
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <a href="#courses" className="inline-flex items-center justify-center gap-3 bg-white/5 border border-white/10 px-7 py-4 rounded-2xl font-black text-lg hover:bg-white/10 transition-all transform hover:-translate-y-1">
-                View courses
+                {t('View courses')}
                 <BookOpen className="w-5 h-5 text-pink-400" />
               </a>
             </motion.div>
@@ -104,16 +122,16 @@ export default function Home() {
           <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.18 }} className="hidden lg:block bg-black/45 backdrop-blur-xl border border-white/10 rounded-3xl p-5 shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
               <div>
-                <p className="text-xs text-primary uppercase tracking-[0.25em] font-black">Today</p>
-                <h2 className="text-2xl font-black">Class 10 board plan</h2>
+                <p className="text-xs text-primary uppercase tracking-[0.25em] font-black">{t('Today')}</p>
+                <h2 className="text-2xl font-black">{t('Class 10 board plan')}</h2>
               </div>
               <div className="w-14 h-14 rounded-2xl bg-primary text-black flex items-center justify-center font-black">84</div>
             </div>
             <div className="space-y-3">
               {[
-                ['Quadratic Equations', 'Live class at 6:00 PM', PlayCircle],
-                ['Light Reflection', '18 adaptive questions', Sparkles],
-                ['History Map Work', 'Teacher-checked drill', ShieldCheck],
+                [t('Quadratic Equations'), t('Live class at 6:00 PM'), PlayCircle],
+                [t('Light Reflection'), t('18 adaptive questions'), Sparkles],
+                [t('History Map Work'), t('Teacher-checked drill'), ShieldCheck],
               ].map(([title, meta, Icon]) => {
                 const RowIcon = Icon as typeof PlayCircle;
                 return (
@@ -134,11 +152,11 @@ export default function Home() {
       <section id="courses" className="max-w-7xl mx-auto px-5 lg:px-10 py-16">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div>
-            <p className="text-primary text-xs uppercase tracking-[0.25em] font-black">Course Library</p>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter mt-2">Structured like coaching, personal like a tutor.</h2>
+            <p className="text-primary text-xs uppercase tracking-[0.25em] font-black">{t('Course Library')}</p>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tighter mt-2">{t('Structured like coaching, personal like a tutor.')}</h2>
           </div>
           <Link to="/login" className="inline-flex items-center gap-2 text-primary font-black">
-            Start learning
+            {t('Start learning')}
             <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
@@ -162,8 +180,8 @@ export default function Home() {
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-6 shadow-md" style={{ backgroundColor: `${course.color}22`, color: course.color }}>
                 <BookOpen className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-black text-white">{course.title}</h3>
-              <p className="text-white/45 text-sm mt-2">{course.lessons} lessons - {course.tests} tests - {course.mentor}</p>
+              <h3 className="text-xl font-black text-white">{t(course.title)}</h3>
+              <p className="text-white/45 text-sm mt-2">{course.lessons} {t('lessons')} - {course.tests} {t('tests')} - {t(course.mentor)}</p>
               <div className="h-2 bg-white/10 rounded-full overflow-hidden mt-5">
                 <motion.div 
                   initial={{ width: 0 }}
@@ -190,10 +208,10 @@ export default function Home() {
           className="max-w-7xl mx-auto px-5 lg:px-10 py-16 grid lg:grid-cols-4 gap-5"
         >
           {[
-            [PlayCircle, 'Live classes', 'Interactive teacher rooms, polls, and replays.', 'from-green-500 to-yellow-400'],
-            [MessagesSquare, 'Doubt solving', 'AI explanations with mentor review.', 'from-green-400 to-pink-400'],
-            [BarChart3, 'Performance analytics', 'Weak-topic heatmaps and exam readiness.', 'from-yellow-400 to-red-500'],
-            [Trophy, 'Rewards', 'Streaks, badges, XP, and weekly challenges.', 'from-pink-500 to-red-500'],
+            [PlayCircle, t('Live classes'), t('Interactive teacher rooms, polls, and replays.'), 'from-green-500 to-yellow-400'],
+            [MessagesSquare, t('Doubt solving'), t('AI explanations with mentor review.'), 'from-green-400 to-pink-400'],
+            [BarChart3, t('Performance analytics'), t('Weak-topic heatmaps and exam readiness.'), 'from-yellow-400 to-red-500'],
+            [Trophy, t('Rewards'), t('Streaks, badges, XP, and weekly challenges.'), 'from-pink-500 to-red-500'],
           ].map(([Icon, title, copy, gradient]) => {
             const FeatureIcon = Icon as typeof PlayCircle;
             return (
@@ -216,14 +234,14 @@ export default function Home() {
       <section id="results" className="max-w-7xl mx-auto px-5 lg:px-10 py-16">
         <div className="grid lg:grid-cols-[0.8fr_1.2fr] gap-8 items-center">
           <div>
-            <p className="text-primary text-xs uppercase tracking-[0.25em] font-black">Exam Ready</p>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter mt-2">From concept clarity to board-paper confidence.</h2>
+            <p className="text-primary text-xs uppercase tracking-[0.25em] font-black">{t('Exam Ready')}</p>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tighter mt-2">{t('From concept clarity to board-paper confidence.')}</h2>
           </div>
           <div className="grid sm:grid-cols-3 gap-4">
             {[
-              ['94%', 'Average chapter completion'],
-              ['3x', 'More practice after doubts'],
-              ['24/7', 'AI study support'],
+              ['94%', t('Average chapter completion')],
+              ['3x', t('More practice after doubts')],
+              ['24/7', t('AI study support')],
             ].map(([value, label]) => (
               <div key={label} className="bg-white/5 border border-white/10 rounded-3xl p-6">
                 <p className="text-4xl font-black text-white">{value}</p>

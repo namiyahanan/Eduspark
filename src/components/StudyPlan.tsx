@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Calendar, CheckCircle2, Clock, Plus, Save, Sparkles, Target, Trash2 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { localStorage_safe, StudyPlanTask, suggestPersonalizedStudyPlan } from '../utils/helpers';
 import { useStudent } from '../contexts/StudentContext';
 import ScrollReveal from './ScrollReveal';

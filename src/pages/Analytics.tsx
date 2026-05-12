@@ -1,20 +1,25 @@
 import { BarChart2, TrendingUp, Target, Award, Brain, Zap, Clock, Calendar, ChevronRight, Star, Flame, Sparkles } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import ScrollReveal from '../components/ScrollReveal';
+import { useStudent } from '../contexts/StudentContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function Analytics() {
+  const { performance } = useStudent();
+  const { t } = useLanguage();
+
   const stats = [
-    { label: 'Mastery Level', value: '84%', icon: Target, color: 'text-primary' },
-    { label: 'Study Streak', value: '12 Days', icon: Flame, color: 'text-primary' },
-    { label: 'Total XP', value: '12,450', icon: Zap, color: 'text-primary' },
-    { label: 'Time Spent', value: '42.5h', icon: Clock, color: 'text-primary' },
+    { label: t('Mastery Level'), value: `${performance.averageScore || 0}%`, icon: Target, color: 'text-primary' },
+    { label: t('Study Streak'), value: `${performance.streak || 0} ${t('Days')}`, icon: Flame, color: 'text-primary' },
+    { label: t('Total XP'), value: ((performance.topicsCompleted || 0) * 1000 + (performance.testsAttempted || 0) * 500).toLocaleString(), icon: Zap, color: 'text-primary' },
+    { label: t('Time Spent'), value: `${Math.round((performance.totalLearningMinutes || 0) / 60)}h`, icon: Clock, color: 'text-primary' },
   ];
 
   const subjects = [
-    { name: 'Mathematics', progress: 88, color: 'bg-primary' },
-    { name: 'Science', progress: 72, color: 'bg-primary' },
-    { name: 'Social Science', progress: 95, color: 'bg-primary' },
-    { name: 'English', progress: 81, color: 'bg-primary' },
+    { name: t('Mathematics'), progress: performance.averageScore || 0, color: 'bg-primary' },
+    { name: t('Science'), progress: Math.max(0, (performance.averageScore || 0) - 10), color: 'bg-primary' },
+    { name: t('Social Science'), progress: Math.min(100, (performance.averageScore || 0) + 5), color: 'bg-primary' },
+    { name: t('English'), progress: Math.max(0, (performance.averageScore || 0) - 5), color: 'bg-primary' },
   ];
 
   return (
@@ -24,14 +29,14 @@ export default function Analytics() {
           <div>
             <div className="flex items-center gap-3 mb-3">
                <TrendingUp className="w-8 h-8 text-primary" />
-               <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Intelligence Hub</span>
+               <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">{t('Intelligence Hub')}</span>
             </div>
-            <h2 className="text-5xl lg:text-6xl font-black text-white tracking-tighter">Your Progress.</h2>
+            <h2 className="text-5xl lg:text-6xl font-black text-white tracking-tighter">{t('Your Progress.')}</h2>
           </div>
           
           <div className="bg-white/5 backdrop-blur-xl px-8 py-4 rounded-3xl border border-white/10 flex items-center gap-4 shadow-2xl">
             <Calendar className="w-6 h-6 text-primary" />
-            <span className="font-black text-white uppercase tracking-widest text-sm">Academic Year 2025-26</span>
+            <span className="font-black text-white uppercase tracking-widest text-sm">{t('Academic Year 2025-26')}</span>
           </div>
         </div>
       </ScrollReveal>
@@ -65,9 +70,9 @@ export default function Analytics() {
             <div className="flex items-center justify-between mb-12">
               <h3 className="text-3xl font-black text-white tracking-tighter flex items-center gap-4">
                 <Brain className="w-8 h-8 text-primary" />
-                Subject Mastery
+                {t('Subject Mastery')}
               </h3>
-              <button className="text-xs font-black text-primary uppercase tracking-widest hover:underline">Full Report</button>
+              <button className="text-xs font-black text-primary uppercase tracking-widest hover:underline">{t('Full Report')}</button>
             </div>
 
             <div className="space-y-10">
@@ -96,14 +101,14 @@ export default function Analytics() {
           <div className="bg-white/5 backdrop-blur-xl rounded-[3rem] p-10 border border-white/10 shadow-2xl h-full">
             <h3 className="text-2xl font-black text-white mb-10 flex items-center gap-4">
               <Award className="w-7 h-7 text-primary" />
-              Achievements
+              {t('Achievements')}
             </h3>
             
             <div className="space-y-6">
               {[
-                { title: 'Math Maven', desc: 'Solved 50 Algebra problems', xp: '+250', icon: Star },
-                { title: 'Science Sage', desc: 'Perfect score in Physics', xp: '+400', icon: Sparkles },
-                { title: 'Social Scholar', desc: 'Completed History Quiz', xp: '+150', icon: Target },
+                { title: t('Math Maven'), desc: t('Solved 50 Algebra problems'), xp: '+250', icon: Star },
+                { title: t('Science Sage'), desc: t('Perfect score in Physics'), xp: '+400', icon: Sparkles },
+                { title: t('Social Scholar'), desc: t('Completed History Quiz'), xp: '+150', icon: Target },
               ].map((item, i) => (
                 <motion.div 
                   key={i}
@@ -129,7 +134,7 @@ export default function Analytics() {
               whileTap={{ scale: 0.98 }}
               className="w-full mt-10 p-5 bg-white/5 rounded-[2rem] border border-white/10 text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-white/10 transition-all"
             >
-              View Hall of Fame
+              {t('View Hall of Fame')}
               <ChevronRight className="w-5 h-5 text-primary" />
             </motion.button>
           </div>

@@ -2,8 +2,9 @@ import { useMemo, useState, useEffect, type FormEvent } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { Heart, Zap, Flame, Trophy, Shield, Scale, Target, Sparkles, CheckCircle2, XCircle, ArrowRight, Lightbulb, Star, Award } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useStudent } from '../contexts/StudentContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import ScrollReveal from '../components/ScrollReveal';
 import { generateQuestions } from '../services/ai';
 import { syllabusData } from '../data/syllabus';
@@ -23,6 +24,7 @@ const difficultyOptions: { value: DifficultyLevel; label: string; copy: string }
 ];
 
 export default function Practice() {
+  const { t } = useLanguage();
   const location = useLocation();
   const params = useParams();
   const { studentInfo, activeTopic, activeSubject, recordTestAttempt } = useStudent();
@@ -186,10 +188,10 @@ export default function Practice() {
         >
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 mb-10">
             <div>
-              <p className="text-primary text-[10px] uppercase tracking-[0.3em] font-black mb-3">Practice Setup</p>
-              <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter">Build your session.</h1>
+              <p className="text-primary text-[10px] uppercase tracking-[0.3em] font-black mb-3">{t('Practice Setup')}</p>
+              <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter">{t('Build your session.')}</h1>
               <p className="text-white/50 text-lg mt-4 max-w-2xl">
-                Choose the subject, chapter, number of questions, and difficulty before the quiz starts.
+                {t('Choose the subject, chapter, number of questions, and difficulty before the quiz starts.')}
               </p>
             </div>
           </div>
@@ -197,7 +199,7 @@ export default function Practice() {
           <div className="grid lg:grid-cols-[0.8fr_1.2fr] gap-10">
             <div className="space-y-8">
               <label className="block">
-                <span className="text-xs font-black uppercase tracking-[0.2em] text-white/45 mb-3 block">Subject</span>
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-white/45 mb-3 block">{t('Subject')}</span>
                 <div className="grid grid-cols-2 gap-2">
                   {subjects.map((subject) => (
                     <button
@@ -217,14 +219,14 @@ export default function Practice() {
                           : "bg-white/5 border-white/5 text-white/60 hover:border-white/20"
                       )}
                     >
-                      {subject}
+                      {t(subject)}
                     </button>
                   ))}
                 </div>
               </label>
 
               <label className="block">
-                <span className="text-xs font-black uppercase tracking-[0.2em] text-white/45 mb-3 block">Question Count</span>
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-white/45 mb-3 block">{t('Question Count')}</span>
                 <div className="flex items-center gap-4">
                   <input
                     type="range"
@@ -239,7 +241,7 @@ export default function Practice() {
               </label>
 
               <div className="space-y-4">
-                <span className="text-xs font-black uppercase tracking-[0.2em] text-white/45 block">Difficulty</span>
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-white/45 block">{t('Difficulty')}</span>
                 <div className="grid grid-cols-3 gap-2">
                   {difficultyOptions.map((option) => (
                     <button
@@ -253,7 +255,7 @@ export default function Practice() {
                           : "bg-white/5 border-white/5 text-white/40"
                       )}
                     >
-                      {option.label}
+                      {t(option.label)}
                     </button>
                   ))}
                 </div>
@@ -262,7 +264,7 @@ export default function Practice() {
 
             <div className="space-y-8">
               <label className="block">
-                <span className="text-xs font-black uppercase tracking-[0.2em] text-white/45 mb-3 block">Chapter selection</span>
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-white/45 mb-3 block">{t('Chapter selection')}</span>
                 <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto custom-scrollbar p-1">
                   {chapterSuggestions.map((chapter) => (
                     <button
@@ -280,49 +282,7 @@ export default function Practice() {
                     </button>
                   ))}
                 </div>
-                <div className="mt-4">
-                  <input
-                    value={chapterInput}
-                    onChange={(event) => setChapterInput(event.target.value)}
-                    className="w-full bg-black/30 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold text-white outline-none focus:border-primary/50 transition-all"
-                    placeholder="Or type custom chapter name..."
-                  />
-                </div>
               </label>
-
-              <label className="block">
-                <span className="text-xs font-black uppercase tracking-[0.2em] text-white/45 mb-3 block">Specific Focus / Topics</span>
-                <textarea
-                  value={customInstructions}
-                  onChange={(event) => setCustomInstructions(event.target.value)}
-                  className="w-full bg-black/30 border border-white/10 rounded-3xl px-6 py-5 text-sm font-bold text-white outline-none focus:border-primary/50 transition-all resize-none h-32"
-                  placeholder="e.g. Focus on Newtonian Laws, exclude friction. Or focus on specific board questions."
-                />
-              </label>
-            </div>
-          </div>
-
-          <div className="mt-8">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-white/45 mb-3">Level</p>
-            <div className="grid md:grid-cols-3 gap-4">
-              {difficultyOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setDifficulty(option.value)}
-                  className={clsx(
-                    "text-left border rounded-3xl p-5 transition-all",
-                    difficulty === option.value
-                      ? "bg-primary text-black border-primary shadow-lg"
-                      : "bg-white/5 border-white/10 text-white/65 hover:text-white hover:border-primary/35"
-                  )}
-                >
-                  <span className="block text-2xl font-black">{option.label}</span>
-                  <span className={clsx("block mt-2 text-sm font-bold", difficulty === option.value ? "text-black/65" : "text-white/40")}>
-                    {option.copy}
-                  </span>
-                </button>
-              ))}
             </div>
           </div>
 
@@ -330,7 +290,7 @@ export default function Practice() {
             type="submit"
             className="mt-10 w-full bg-primary text-black py-5 rounded-full font-black text-xl flex items-center justify-center gap-3 hover:bg-white transition-all"
           >
-            Start Practice
+            {t('Start practice')}
             <ArrowRight className="w-6 h-6" />
           </button>
         </motion.form>

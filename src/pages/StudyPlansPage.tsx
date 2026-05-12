@@ -1,21 +1,33 @@
-import React, { useState } from 'react';
-import { Target, Calendar, CheckCircle2, Clock, Plus, Flame, Sparkles, BookOpen, ChevronRight } from 'lucide-react';
-import { motion } from 'motion/react';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { 
+  Calendar, 
+  Flame, 
+  Target, 
+  Plus, 
+  CheckCircle2, 
+  BookOpen, 
+  Clock, 
+  Sparkles, 
+  ChevronRight 
+} from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 import ScrollReveal from '../components/ScrollReveal';
 
 export default function StudyPlansPage() {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'daily' | 'weekly'>('daily');
 
   const dailyGoals = [
-    { id: 1, title: 'Complete Math Quiz', subject: 'Mathematics', duration: '30 mins', completed: true },
-    { id: 2, title: 'Read Science Chapter 4', subject: 'Science', duration: '45 mins', completed: false },
-    { id: 3, title: 'Practice Grammar Exercises', subject: 'English', duration: '20 mins', completed: false },
+    { id: 1, title: t('Complete Math Quiz'), subject: t('Mathematics'), duration: t('30 mins'), completed: true },
+    { id: 2, title: t('Read Science Chapter 4'), subject: t('Science'), duration: t('45 mins'), completed: false },
+    { id: 3, title: t('Practice Grammar Exercises'), subject: t('English'), duration: t('20 mins'), completed: false },
   ];
 
   const weeklyMilestones = [
-    { id: 1, title: 'Master Algebra Basics', progress: 80, target: 'Friday' },
-    { id: 2, title: 'Complete Physics Lab', progress: 40, target: 'Sunday' },
-    { id: 3, title: 'Essay Submission', progress: 100, target: 'Wednesday' },
+    { id: 1, title: t('Master Algebra Basics'), progress: 80, target: t('Friday') },
+    { id: 2, title: t('Complete Physics Lab'), progress: 40, target: t('Sunday') },
+    { id: 3, title: t('Essay Submission'), progress: 100, target: t('Wednesday') },
   ];
 
   return (
@@ -25,22 +37,22 @@ export default function StudyPlansPage() {
           <div>
             <div className="flex items-center gap-3 mb-3">
               <Calendar className="w-8 h-8 text-primary" />
-              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Your Journey</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">{t('Your Journey')}</span>
             </div>
-            <h1 className="text-4xl lg:text-5xl font-black text-white tracking-tighter">Study Plans.</h1>
-            <p className="text-white/60 mt-4 max-w-xl">Organize your learning journey, set goals, and track your milestones to achieve academic excellence.</p>
+            <h1 className="text-4xl lg:text-5xl font-black text-white tracking-tighter">{t('Study Plans.')}</h1>
+            <p className="text-white/60 mt-4 max-w-xl">{t('Organize your learning journey, set goals, and track your milestones to achieve academic excellence.')}</p>
           </div>
           
           <div className="flex gap-4">
             <div className="bg-white/5 backdrop-blur-xl px-6 py-4 rounded-3xl border border-white/10 flex flex-col items-center shadow-2xl">
               <Flame className="w-6 h-6 text-red-500 mb-1" />
-              <span className="font-black text-white text-lg">7 Day</span>
-              <span className="text-[10px] text-white/40 uppercase tracking-wider">Streak</span>
+              <span className="font-black text-white text-lg">7 {t('Day')}</span>
+              <span className="text-[10px] text-white/40 uppercase tracking-wider">{t('Streak')}</span>
             </div>
             <div className="bg-white/5 backdrop-blur-xl px-6 py-4 rounded-3xl border border-white/10 flex flex-col items-center shadow-2xl">
               <Target className="w-6 h-6 text-primary mb-1" />
               <span className="font-black text-white text-lg">85%</span>
-              <span className="text-[10px] text-white/40 uppercase tracking-wider">Completion</span>
+              <span className="text-[10px] text-white/40 uppercase tracking-wider">{t('Completion')}</span>
             </div>
           </div>
         </div>
@@ -57,7 +69,7 @@ export default function StudyPlansPage() {
                 activeTab === 'daily' ? 'bg-primary text-black shadow-lg' : 'text-white/60 hover:text-white'
               }`}
             >
-              Daily Goals
+              {t('Daily Goals')}
             </button>
             <button
               onClick={() => setActiveTab('weekly')}
@@ -65,7 +77,7 @@ export default function StudyPlansPage() {
                 activeTab === 'weekly' ? 'bg-primary text-black shadow-lg' : 'text-white/60 hover:text-white'
               }`}
             >
-              Weekly Milestones
+              {t('Weekly Milestones')}
             </button>
           </div>
 
@@ -73,11 +85,11 @@ export default function StudyPlansPage() {
           <div className="bg-white/5 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white/10 shadow-2xl">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-2xl font-black text-white">
-                {activeTab === 'daily' ? "Today's Tasks" : "This Week's Milestones"}
+                {activeTab === 'daily' ? t("Today's Tasks") : t("This Week's Milestones")}
               </h2>
               <button className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors text-sm font-bold">
                 <Plus className="w-4 h-4" />
-                Add New
+                {t('Add New')}
               </button>
             </div>
 
@@ -128,7 +140,7 @@ export default function StudyPlansPage() {
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <h3 className="font-bold text-lg text-white">{milestone.title}</h3>
-                        <p className="text-sm text-white/50 mt-1">Target: {milestone.target}</p>
+                        <p className="text-sm text-white/50 mt-1">{t('Target')}: {milestone.target}</p>
                       </div>
                       <span className="bg-primary/20 text-primary px-3 py-1 rounded-full text-xs font-black">
                         {milestone.progress}%
@@ -155,22 +167,22 @@ export default function StudyPlansPage() {
             <div className="bg-black/80 backdrop-blur-2xl rounded-[2.5rem] p-8 h-full">
               <div className="flex items-center gap-3 mb-6">
                 <Sparkles className="w-6 h-6 text-primary" />
-                <h3 className="text-xl font-black text-white">AI Recommendations</h3>
+                <h3 className="text-xl font-black text-white">{t('AI Recommendations')}</h3>
               </div>
               
               <div className="space-y-6">
                 <div className="border-l-2 border-primary pl-4">
-                  <h4 className="text-sm font-bold text-white mb-2">Focus on Algebra</h4>
-                  <p className="text-xs text-white/60 leading-relaxed">Based on recent quizzes, allocating 20 extra minutes to Algebra will improve your overall math score.</p>
+                  <h4 className="text-sm font-bold text-white mb-2">{t('Focus on Algebra')}</h4>
+                  <p className="text-xs text-white/60 leading-relaxed">{t('Based on recent quizzes, allocating 20 extra minutes to Algebra will improve your overall math score.')}</p>
                 </div>
                 <div className="border-l-2 border-pink-500 pl-4">
-                  <h4 className="text-sm font-bold text-white mb-2">Revise Physics Notes</h4>
-                  <p className="text-xs text-white/60 leading-relaxed">You have an upcoming assessment in 3 days. We recommend reviewing Chapter 2 tonight.</p>
+                  <h4 className="text-sm font-bold text-white mb-2">{t('Revise Physics Notes')}</h4>
+                  <p className="text-xs text-white/60 leading-relaxed">{t('You have an upcoming assessment in 3 days. We recommend reviewing Chapter 2 tonight.')}</p>
                 </div>
               </div>
 
               <button className="mt-8 w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white py-3 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2">
-                Generate Smart Plan <ChevronRight className="w-4 h-4" />
+                {t('Generate Smart Plan')} <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>

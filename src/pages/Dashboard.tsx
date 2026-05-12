@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, BarChart3, BookOpen, CalendarClock, CheckCircle2, ChevronRight, ClipboardList, Flame, GraduationCap, PlayCircle, Sparkles, Target, Trophy, X, Zap } from 'lucide-react';
 import { useStudent } from '../contexts/StudentContext';
 import { syllabusData, Unit } from '../data/syllabus';
@@ -9,8 +9,11 @@ import { generateLessonContent } from '../services/ai';
 import { clsx } from 'clsx';
 import { cleanAIOutput } from '../utils/helpers';
 
+import { useLanguage } from '../contexts/LanguageContext';
+
 export default function Dashboard() {
   const { studentInfo, setActiveTopic, performance } = useStudent();
+  const { t } = useLanguage();
   const [selectedSyllabus, setSelectedSyllabus] = useState<{ subject: string; units: Unit[] } | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [lessonContent, setLessonContent] = useState('');
@@ -23,9 +26,20 @@ export default function Dashboard() {
 
   const syllabusForGrade = syllabusData[grade] || syllabusData['Class 10'];
   const recommendedCourses = useMemo(() => {
-    const matching = courseCatalog.filter((course) => course.grade === grade && interests.some((interest) => course.subject.includes(interest) || interest.includes(course.subject)));
-    return matching.length ? matching : courseCatalog.filter((course) => course.grade === grade).slice(0, 3);
-  }, [grade, interests]);
+    const matching = Object.keys(syllabusForGrade).filter(s => interests.includes(s)).slice(0, 3);
+    const subjectsToShow = matching.length ? matching : Object.keys(syllabusForGrade).slice(0, 3);
+    
+    return subjectsToShow.map(s => ({
+      id: s,
+      title: s,
+      subject: s,
+      level: 'FOUNDATION',
+      progress: Math.floor(Math.random() * 100),
+      lessons: syllabusForGrade[s]?.units.length * 5,
+      nextClass: 'Ready for Next Chapter',
+      color: '#4ADE80'
+    }));
+  }, [grade, interests, syllabusForGrade]);
 
   const openSubject = (subjectName: string) => {
     const cleanSubject = subjectName.replace(/ - .*/, '');
@@ -63,21 +77,21 @@ export default function Dashboard() {
           <div className="grid lg:grid-cols-[1fr_420px] gap-8 items-center">
             <div>
               <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="text-primary text-xs uppercase tracking-[0.3em] font-black mb-4">
-                {grade} - {board} personalized plan
+                {grade} - {board} {t('personalized plan')}
               </motion.p>
               <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter text-white max-w-4xl">
-                Welcome back, {name}. Your next best lesson is ready.
+                {t('Welcome back,')} {name}. {t('Your next best lesson is ready.')}
               </motion.h1>
               <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-white/55 text-lg mt-5 max-w-2xl">
-                Continue your adaptive learning path, join live classes, clear doubts, and move from concepts to exam-ready practice.
+                {t('Continue your adaptive learning path, join live classes, clear doubts, and move from concepts to exam-ready practice.')}
               </motion.p>
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="flex flex-col sm:flex-row gap-3 mt-8">
                 <Link to="/app/courses" className="inline-flex items-center justify-center gap-2 bg-primary text-black rounded-2xl px-6 py-4 font-black hover:bg-white transition-all">
-                  Explore courses
+                  {t('Explore courses')}
                   <ChevronRight className="w-5 h-5" />
                 </Link>
                 <Link to="/app/practice" className="inline-flex items-center justify-center gap-2 bg-white/5 border border-white/10 text-white rounded-2xl px-6 py-4 font-black hover:bg-white/10 transition-all">
-                  Start practice
+                  {t('Start practice')}
                   <Zap className="w-5 h-5 text-primary" />
                 </Link>
               </motion.div>
@@ -86,16 +100,18 @@ export default function Dashboard() {
             <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} className="bg-white/5 border border-white/10 rounded-3xl p-6 shadow-2xl">
               <div className="flex items-center justify-between gap-4 mb-6">
                 <div>
-                  <p className="text-white/45 text-sm">Today&apos;s momentum</p>
-                  <h2 className="text-3xl font-black text-white">Learning score</h2>
+                  <p className="text-white/45 text-sm">{t('Today\'s momentum')}</p>
+                  <h2 className="text-3xl font-black text-white">{t('Learning score')}</h2>
                 </div>
-                <div className="w-16 h-16 rounded-3xl bg-primary text-black flex items-center justify-center font-black text-2xl">84</div>
+                <div className="w-16 h-16 rounded-3xl bg-primary text-black flex items-center justify-center font-black text-2xl">
+                  {performance.averageScore || 0}
+                </div>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  [Flame, performance.streak || 12, 'Streak'],
-                  [BookOpen, performance.topicsCompleted || 18, 'Topics'],
-                  [Target, `${performance.averageScore || 76}%`, 'Accuracy'],
+                  [Flame, performance.streak || 12, t('Streak')],
+                  [BookOpen, performance.topicsCompleted || 18, t('Topics')],
+                  [Target, `${performance.averageScore || 76}%`, t('Accuracy')],
                 ].map(([Icon, value, label]) => {
                   const StatIcon = Icon as typeof Flame;
                   return (
@@ -117,8 +133,8 @@ export default function Dashboard() {
           <section className="bg-white/5 border border-white/10 rounded-3xl p-6">
             <div className="flex items-center justify-between gap-4 mb-6">
               <div>
-                <p className="text-primary text-xs uppercase tracking-[0.2em] font-black">My Courses</p>
-                <h2 className="text-3xl font-black text-white tracking-tight mt-1">Continue learning</h2>
+                <p className="text-primary text-xs uppercase tracking-[0.2em] font-black">{t('My Courses')}</p>
+                <h2 className="text-3xl font-black text-white tracking-tight mt-1">{t('Continue learning')}</h2>
               </div>
               <GraduationCap className="w-8 h-8 text-primary" />
             </div>
@@ -155,8 +171,8 @@ export default function Dashboard() {
           <section className="lg:col-span-2 bg-white/5 border border-white/10 rounded-3xl p-6">
             <div className="flex items-center justify-between gap-4 mb-6">
               <div>
-                <p className="text-primary text-xs uppercase tracking-[0.2em] font-black">Live Classes</p>
-                <h2 className="text-3xl font-black text-white tracking-tight mt-1">Teacher rooms</h2>
+                <p className="text-primary text-xs uppercase tracking-[0.2em] font-black">{t('Live Classes')}</p>
+                <h2 className="text-3xl font-black text-white tracking-tight mt-1">{t('Teacher rooms')}</h2>
               </div>
               <CalendarClock className="w-8 h-8 text-primary" />
             </div>
@@ -179,13 +195,13 @@ export default function Dashboard() {
 
           <section className="bg-primary text-black rounded-3xl p-6 overflow-hidden relative">
             <Trophy className="w-14 h-14 mb-8" />
-            <h2 className="text-3xl font-black tracking-tight">Weekly challenge</h2>
-            <p className="mt-3 text-black/65 font-medium">Complete 3 topic drills and one mock test to unlock the Board Sprint badge.</p>
+            <h2 className="text-3xl font-black tracking-tight">{t('Weekly challenge')}</h2>
+            <p className="mt-3 text-black/65 font-medium">{t('Complete 3 topic drills and one mock test to unlock the Board Sprint badge.')}</p>
             <div className="h-3 bg-black/10 rounded-full overflow-hidden mt-8">
               <div className="h-full w-[72%] bg-black rounded-full" />
             </div>
             <Link to="/app/gamified-learning" className="inline-flex items-center gap-2 mt-6 font-black">
-              View rewards
+              {t('View rewards')}
               <ChevronRight className="w-5 h-5" />
             </Link>
           </section>
@@ -194,11 +210,11 @@ export default function Dashboard() {
         <section className="bg-white/5 border border-white/10 rounded-3xl p-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
             <div>
-              <p className="text-primary text-xs uppercase tracking-[0.2em] font-black">Quick Syllabus</p>
-              <h2 className="text-3xl font-black text-white tracking-tight mt-1">Pick a subject to learn now</h2>
+              <p className="text-primary text-xs uppercase tracking-[0.2em] font-black">{t('Quick Syllabus')}</p>
+              <h2 className="text-3xl font-black text-white tracking-tight mt-1">{t('Pick a subject to learn now')}</h2>
             </div>
             <Link to="/app/courses" className="text-primary font-black inline-flex items-center gap-2">
-              Full learning hub
+              {t('Full learning hub')}
               <ChevronRight className="w-5 h-5" />
             </Link>
           </div>
