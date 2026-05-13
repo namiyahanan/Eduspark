@@ -7,7 +7,7 @@ import { syllabusData } from '../data/syllabus';
 import { generatePracticeQuestions } from '../services/ai';
 
 export default function GamifiedLearning() {
-  const { studentInfo, recordTopicCompletion, recordTestAttempt } = useStudent();
+  const { studentInfo, performance, recordTopicCompletion, recordTestAttempt } = useStudent();
   const { t, language } = useLanguage();
   
   const [step, setStep] = useState<'subject' | 'chapter' | 'level' | 'quiz' | 'result'>('subject');
@@ -19,6 +19,8 @@ export default function GamifiedLearning() {
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [isAnswering, setIsAnswering] = useState(false);
 
   const grade = studentInfo?.grade || 'Class 10';
   const subjects = Object.keys(syllabusData[grade] || syllabusData['Class 10']);
@@ -42,21 +44,36 @@ export default function GamifiedLearning() {
   };
 
   const handleAnswer = (index: number) => {
-    if (index === questions[currentQIndex].correctIndex) {
+    if (isAnswering) return;
+    
+    setIsAnswering(true);
+    setSelectedAnswer(index);
+    
+    const isCorrect = index === questions[currentQIndex].correctIndex;
+    if (isCorrect) {
       setScore(score + 10);
     }
     
-    if (currentQIndex < questions.length - 1) {
-      setCurrentQIndex(currentQIndex + 1);
-    } else {
-      setStep('result');
-      recordTestAttempt(score);
-      if (score >= 40) recordTopicCompletion(selectedChapter);
-    }
+    setTimeout(() => {
+      if (currentQIndex < questions.length - 1) {
+        setCurrentQIndex(currentQIndex + 1);
+        setSelectedAnswer(null);
+        setIsAnswering(false);
+      } else {
+        setStep('result');
+        const finalScore = isCorrect ? score + 10 : score;
+        recordTestAttempt(finalScore);
+        if (finalScore >= 40) {
+           recordTopicCompletion(selectedChapter);
+        }
+        setIsAnswering(false);
+        setSelectedAnswer(null);
+      }
+    }, 800); // Increased delay to see feedback
   };
 
   return (
-    <div className="p-6 lg:p-10 max-w-7xl mx-auto w-full pb-24 lg:pb-10 min-h-screen text-white/80">
+    <div className="p-6 lg:p-10 max-w-7xl mx-auto w-full pb-32 lg:pb-10 min-h-screen text-white/80 overflow-y-auto">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
@@ -130,36 +147,55 @@ export default function GamifiedLearning() {
           </motion.div>
         )}
 
-        {/* Step 3: Level Selection */}
+        {/* Step 3: Level Selection - Map Style */}
         {step === 'level' && (
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center py-10">
-            <div className="grid grid-cols-1 gap-8 w-full max-w-md">
-              {[1, 2, 3, 4, 5].map((lvl) => {
-                const isUnlocked = lvl === 1 || (studentInfo?.performance?.topicsCompleted || 0) >= (lvl - 1) * 2;
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center py-10">
+            <button onClick={() => setStep('chapter')} className="self-start flex items-center gap-2 text-white/40 hover:text-white font-black uppercase text-xs tracking-widest mb-10">
+              <ArrowLeft className="w-4 h-4" /> {t('Back')}
+            </button>
+            
+            <div className="relative flex flex-col items-center gap-12 w-full max-w-md pb-20">
+              {/* Vertical Path Line */}
+              <div className="absolute top-10 bottom-10 w-1 bg-white/5 left-1/2 -translate-x-1/2" />
+              
+              {[1, 2, 3, 4, 5].map((lvl, idx) => {
+                const isUnlocked = lvl === 1 || (performance?.topicsCompleted || 0) >= (lvl - 1);
                 const isActive = isUnlocked && lvl === activeLevel;
+                const isOdd = idx % 2 !== 0;
                 
                 return (
-                  <button
+                  <motion.button
                     key={lvl}
                     disabled={!isUnlocked}
+                    whileHover={isUnlocked ? { scale: 1.1 } : {}}
+                    whileTap={isUnlocked ? { scale: 0.95 } : {}}
                     onClick={() => startQuiz(lvl)}
-                    className={`relative flex items-center justify-between p-8 rounded-[2.5rem] border-2 transition-all group ${
+                    className={`relative z-10 w-24 h-24 rounded-full flex flex-col items-center justify-center transition-all shadow-2xl ${
                       isUnlocked 
-                        ? 'bg-primary/20 border-primary text-white shadow-[0_0_50px_rgba(74,222,128,0.2)]' 
-                        : 'bg-white/5 border-white/10 text-white/20 cursor-not-allowed'
-                    } ${isActive ? 'ring-2 ring-primary ring-offset-4 ring-offset-black' : ''}`}
+                        ? 'bg-gradient-to-br from-green-400 to-green-600 text-white border-4 border-white' 
+                        : 'bg-gray-800 text-white/20 border-4 border-white/5 grayscale'
+                    } ${isOdd ? 'translate-x-16' : '-translate-x-16'}`}
                   >
-                    <div className="flex items-center gap-6">
-                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-2xl ${isUnlocked ? 'bg-primary text-black' : 'bg-white/10'}`}>
-                        {lvl}
-                      </div>
-                      <div className="text-left">
-                        <h4 className="text-2xl font-black tracking-tight">{t('Level')} {lvl}</h4>
-                        <p className="text-[10px] font-black uppercase tracking-widest opacity-60">10 {t('Questions')} • 100 {t('Score')}</p>
-                      </div>
+                    <span className="text-3xl font-black italic">{lvl}</span>
+                    
+                    {/* Stars below the level node */}
+                    <div className="absolute -bottom-6 flex gap-1">
+                      {[1, 2, 3].map(s => (
+                        <Star key={s} className={`w-4 h-4 ${isUnlocked ? 'text-yellow-400 fill-yellow-400' : 'text-white/10'}`} />
+                      ))}
                     </div>
-                    {!isUnlocked ? <Lock className="w-6 h-6 text-white/20" /> : <ChevronRight className="w-8 h-8 text-primary group-hover:translate-x-2 transition-all" />}
-                  </button>
+
+                    {/* Connecting line to next level */}
+                    {lvl < 5 && (
+                      <div className={`absolute top-full h-12 w-1 bg-white/10 -translate-x-1/2 left-1/2 ${isUnlocked ? 'bg-green-500/30' : ''}`} />
+                    )}
+
+                    {!isUnlocked && (
+                      <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center">
+                        <Lock className="w-8 h-8 text-white/60" />
+                      </div>
+                    )}
+                  </motion.button>
                 );
               })}
             </div>
@@ -175,7 +211,7 @@ export default function GamifiedLearning() {
                 <p className="text-white/40 font-black uppercase tracking-widest">{t('Initialize Session.')}</p>
               </div>
             ) : (
-              <div className="space-y-10">
+              <div className="space-y-6 md:space-y-10">
                 <div className="flex justify-between items-end">
                    <p className="text-primary font-black uppercase tracking-widest text-xs">{t('Question')} {currentQIndex + 1}/10</p>
                    <p className="text-white/40 font-black text-3xl">{score}</p>
@@ -184,45 +220,120 @@ export default function GamifiedLearning() {
                    <motion.div initial={{ width: 0 }} animate={{ width: `${((currentQIndex + 1) / 10) * 100}%` }} className="h-full bg-primary" />
                 </div>
                 
-                <h3 className="text-3xl md:text-4xl font-black text-white leading-tight">
+                <h3 className="text-2xl md:text-4xl font-black text-white leading-tight">
                   {questions[currentQIndex]?.question}
                 </h3>
 
-                <div className="grid gap-4">
-                  {questions[currentQIndex]?.options.map((opt: string, i: number) => (
-                    <button
-                      key={i}
-                      onClick={() => handleAnswer(i)}
-                      className="w-full text-left p-6 rounded-3xl bg-white/5 border border-white/10 hover:border-primary/50 hover:bg-white/10 transition-all font-bold text-lg text-white/80 hover:text-white"
-                    >
-                      {opt}
-                    </button>
-                  ))}
+                <div className="grid gap-3 md:gap-4 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
+                  {questions[currentQIndex]?.options.map((opt: string, i: number) => {
+                    const isSelected = selectedAnswer === i;
+                    const isCorrect = i === questions[currentQIndex].correctIndex;
+                    const showSuccess = isAnswering && isCorrect;
+                    const showError = isAnswering && isSelected && !isCorrect;
+
+                    return (
+                      <button
+                        key={i}
+                        disabled={isAnswering}
+                        onClick={() => handleAnswer(i)}
+                        className={`w-full text-left p-5 md:p-6 rounded-3xl border transition-all font-bold text-base md:text-lg relative overflow-hidden ${
+                          showSuccess 
+                            ? 'bg-green-500/20 border-green-500 text-green-400 shadow-[0_0_20px_rgba(34,197,94,0.2)]' 
+                            : showError
+                              ? 'bg-red-500/20 border-red-500 text-red-400'
+                              : isAnswering && !isCorrect
+                                ? 'bg-white/5 border-white/5 opacity-40'
+                                : 'bg-white/5 border-white/10 hover:border-primary/50 hover:bg-white/10 text-white/80 hover:text-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${
+                            showSuccess ? 'bg-green-500 text-white' : showError ? 'bg-red-500 text-white' : 'bg-white/10'
+                          }`}>
+                            {showSuccess ? <CheckCircle2 className="w-4 h-4" /> : showError ? <XCircle className="w-4 h-4" /> : String.fromCharCode(65 + i)}
+                          </div>
+                          {opt}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
           </motion.div>
         )}
 
-        {/* Step 5: Result Screen */}
+        {/* Step 5: Result Screen - Score! Hero Style */}
         {step === 'result' && (
-          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-40 h-40 rounded-[3rem] bg-primary text-black flex items-center justify-center shadow-[0_0_80px_rgba(74,222,128,0.4)] mb-10">
-               <Trophy className="w-20 h-20" />
-            </div>
-            <h2 className="text-6xl font-black text-white tracking-tighter mb-4">{score >= 40 ? t('Quiz Complete!') : 'Keep Trying!'}</h2>
-            <p className="text-3xl font-black text-primary mb-12">{t('Your Marks:')} {score}/100</p>
-            
-            <div className="flex gap-4">
-               <button onClick={() => setStep('subject')} className="px-10 py-5 bg-white text-black rounded-full font-black text-lg uppercase tracking-widest hover:bg-primary transition-all">
-                  {t('Finish Quiz')}
-               </button>
-               {score >= 40 && (
-                 <button onClick={() => startQuiz(activeLevel + 1)} className="px-10 py-5 bg-primary/10 border border-primary text-primary rounded-full font-black text-lg uppercase tracking-widest hover:bg-primary hover:text-black transition-all">
-                    {t('Next Question')}
-                 </button>
-               )}
-            </div>
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md"
+          >
+            <motion.div 
+              initial={{ scale: 0.5, y: 100 }} 
+              animate={{ scale: 1, y: 0 }} 
+              className="bg-gradient-to-b from-[#1a4d2e] to-[#0a1f12] w-full max-w-md rounded-[3rem] p-10 text-center border-4 border-white/20 shadow-[0_0_100px_rgba(34,197,94,0.3)] relative overflow-hidden"
+            >
+              {/* Score! Hero Style Background Pattern */}
+              <div className="absolute inset-0 opacity-10 pointer-events-none">
+                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/20 to-transparent" />
+              </div>
+
+              <h2 className="text-4xl font-black text-white italic tracking-tighter mb-2 uppercase drop-shadow-lg">
+                {score >= 90 ? 'Amazing!' : score >= 70 ? 'Great Job!' : score >= 40 ? 'Level Clear!' : 'Try Again!'}
+              </h2>
+              
+              <div className="flex justify-center gap-4 my-10">
+                {[1, 2, 3].map((star) => {
+                  const isFilled = (star === 1 && score >= 40) || (star === 2 && score >= 70) || (star === 3 && score >= 90);
+                  return (
+                    <motion.div
+                      key={star}
+                      initial={{ scale: 0, rotate: -45 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ delay: 0.3 + (star * 0.2), type: 'spring' }}
+                    >
+                      <Star 
+                        className={`w-16 h-16 ${isFilled ? 'text-yellow-400 fill-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.6)]' : 'text-white/10'}`} 
+                        strokeWidth={1}
+                      />
+                    </motion.div>
+                  );
+                })}
+              </div>
+
+              <div className="space-y-2 mb-10">
+                <p className="text-white/60 font-bold uppercase tracking-[0.2em] text-xs">Final Score</p>
+                <div className="text-7xl font-black text-white italic tracking-tighter">
+                   {score}<span className="text-2xl text-white/40 not-italic ml-1">/100</span>
+                </div>
+              </div>
+
+              <div className="grid gap-4">
+                {score >= 40 ? (
+                  <button 
+                    onClick={() => startQuiz(activeLevel + 1)} 
+                    className="w-full py-6 bg-yellow-400 hover:bg-yellow-300 text-black rounded-2xl font-black text-xl uppercase tracking-widest shadow-[0_10px_0_rgb(161,98,7)] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-3"
+                  >
+                    Next Level <ChevronRight className="w-6 h-6" />
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => startQuiz(activeLevel)} 
+                    className="w-full py-6 bg-white hover:bg-gray-100 text-black rounded-2xl font-black text-xl uppercase tracking-widest shadow-[0_10px_0_rgb(156,163,175)] active:translate-y-1 active:shadow-none transition-all"
+                  >
+                    Retry
+                  </button>
+                )}
+                <button 
+                  onClick={() => setStep('subject')} 
+                  className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-all"
+                >
+                  Exit to Menu
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
 

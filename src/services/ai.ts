@@ -173,17 +173,44 @@ Return only a JSON array in this shape:
 [{"question":"...","options":["A","B","C","D"],"correctIndex":0,"explanation":"..."}]`;
 
     const response = await callAI(prompt, true);
-    return JSON.parse(response);
+    let questions = JSON.parse(response);
+    
+    // Ensure we have an array
+    if (!Array.isArray(questions)) questions = [questions];
+
+    // Pad if necessary to match the requested count
+    if (questions.length < count) {
+      const padding = Array(count - questions.length).fill(null).map((_, i) => ({
+        question: `Extra Practice Question ${questions.length + i + 1}: What is another key aspect of ${topic}?`,
+        options: ['Foundation Concept', 'Advanced Theory', 'Practical Usage', 'Standard Rule'],
+        correctIndex: 0,
+        explanation: 'Continue practicing the core fundamentals of this chapter.',
+      }));
+      questions = [...questions, ...padding];
+    }
+
+    return questions.slice(0, count);
   } catch (error) {
     console.error('AI Question Error:', error);
-    return [
-      {
-        question: `What is the main concept of ${topic} in ${subject}?`,
-        options: ['Fundamental principle', 'Advanced theory', 'Practical application', 'Historical context'],
-        correctIndex: 0,
-        explanation: 'This checks whether you understand the foundation before moving into applications.',
-      },
+    const genericQuestions = [
+      { q: "What is the fundamental definition of ${topic}?", o: ["Standard Definition", "Alternative View", "Historical Concept", "Applied Rule"], c: 0 },
+      { q: "Which of these is a key application of ${topic}?", o: ["Industrial usage", "Daily life examples", "Laboratory experiments", "None of the above"], c: 1 },
+      { q: "Identify the primary formula or principle used in ${topic}.", o: ["First Law", "Core Theorem", "Basic Equation", "Derived Rule"], c: 2 },
+      { q: "Who is known for major contributions to ${topic}?", o: ["Ancient scholars", "Modern scientists", "Pioneering researchers", "Various experts"], c: 3 },
+      { q: "What happens when we apply ${topic} in a real-world scenario?", o: ["Predictable outcome", "Variable results", "Efficiency increases", "All of these"], c: 3 },
+      { q: "Which property is most characteristic of ${topic}?", o: ["Consistency", "Scalability", "Reliability", "Specific Value"], c: 0 },
+      { q: "How does ${topic} relate to ${subject} as a whole?", o: ["Core pillar", "Secondary topic", "Applied branch", "Historical root"], c: 0 },
+      { q: "What is a common misconception about ${topic}?", o: ["It's too complex", "It's rarely used", "It only applies to theory", "It is static"], c: 2 },
+      { q: "Select the most accurate statement regarding ${topic}.", o: ["Universal Law", "General Guideline", "Contextual Rule", "Flexible Idea"], c: 0 },
+      { q: "In which grade is ${topic} typically first introduced?", o: ["Primary", "Middle School", "High School", "Higher Ed"], c: 2 }
     ];
+
+    return genericQuestions.map((g, i) => ({
+      question: `Question ${i + 1}: ${g.q.replace("${topic}", topic)}`,
+      options: g.o,
+      correctIndex: g.c,
+      explanation: `Studying ${topic} helps build a strong foundation in ${subject}.`,
+    }));
   }
 }
 
