@@ -18,6 +18,7 @@ export default function Dashboard() {
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [lessonContent, setLessonContent] = useState('');
   const [isLoadingLesson, setIsLoadingLesson] = useState(false);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(null);
 
   const name = studentInfo?.name || 'Student';
   const grade = studentInfo?.grade || 'Class 10';
@@ -58,6 +59,12 @@ export default function Dashboard() {
     if (!selectedSyllabus) return;
     setSelectedTopic(topic);
     setActiveTopic(topic, selectedSyllabus.subject);
+    
+    // Find video URL from syllabus
+    const unit = selectedSyllabus.units.find(u => u.topics.some(t => (typeof t === 'string' ? t : t.name) === topic));
+    const topicObj = unit?.topics.find(t => (typeof t === 'string' ? t : t.name) === topic);
+    setCurrentVideoUrl(typeof topicObj === 'object' ? topicObj.videoUrl || null : null);
+
     setIsLoadingLesson(true);
     setLessonContent('');
     const content = await generateLessonContent(topic, selectedSyllabus.subject);
@@ -298,6 +305,17 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <div className="space-y-8">
+                    {currentVideoUrl && (
+                      <div className="aspect-video w-full rounded-3xl overflow-hidden border border-white/10 bg-black/50 shadow-2xl">
+                        <iframe
+                          src={currentVideoUrl}
+                          className="w-full h-full"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          title="Lesson Video"
+                        />
+                      </div>
+                    )}
                     <div className="text-white/70 text-lg leading-8 space-y-6">
                       {lessonContent.split('\n\n').map((paragraph, index) => paragraph.startsWith('#') ? (
                         <h2 key={index} className="text-3xl font-black text-white pt-4">{paragraph.replace(/#/g, '').trim()}</h2>

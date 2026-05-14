@@ -1,4 +1,4 @@
-import { generateQuestionPaper } from './src/services/ai';
+import { generateQuestionPaper } from '../src/services/ai';
 import dotenv from 'dotenv';
 dotenv.config();
 

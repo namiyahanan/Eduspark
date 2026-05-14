@@ -116,23 +116,26 @@ Keep it concise and engaging.`;
 
     return cleanAIOutput(await callAI(prompt));
   } catch (error) {
-    console.error('AI Lesson Error:', error);
+    console.error('AI Lesson Error Detail:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return cleanAIOutput(`## ${topic} - ${subject}
+
+> ⚠️ **Technical Note**: The AI service encountered an issue (${errorMessage}). Showing essential study notes below.
 
 ### Introduction
 ${topic} is an important concept in ${subject}. Start by understanding the definition, then connect it to examples and practice questions.
 
 ### Core Concepts
-- Learn the basic definition.
-- Identify the key formula, rule, or idea.
-- Connect the topic to real exam-style questions.
+- **Key Definition**: Focus on the fundamental rules governing ${topic}.
+- **Formula/Rule**: Identify the main mathematical or scientific principle.
+- **Application**: Connect the topic to real exam-style questions.
 
-### Tips
+### Study Tips
 - Revise the concept in small chunks.
 - Practice one solved example before attempting new questions.
-- Note mistakes and convert them into revision points.
+- Note common mistakes to improve your accuracy.
 
-*Note: Full AI content could not be loaded. Check your API key or internet connection.*`);
+*Tip: Please check your internet connection or verify the AI API configuration in the dashboard.*`);
   }
 }
 

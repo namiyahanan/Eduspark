@@ -120,7 +120,7 @@ export function StudentProvider({ children }: { children: ReactNode }) {
 
   return (
     <StudentContext.Provider value={{ 
-      studentInfo, login, activeTopic, activeSubject, 
+      studentInfo, setStudentInfo, login, activeTopic, activeSubject, 
       setActiveTopic: (t, s) => { setActiveTopicState(t); setActiveSubjectState(s); }, 
       logout, performance, updatePerformance, recordTopicCompletion, recordTestAttempt, updateLearningTime 
     }}>

@@ -16,6 +16,7 @@ export default function Courses() {
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [lessonContent, setLessonContent] = useState('');
   const [isLoadingLesson, setIsLoadingLesson] = useState(false);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(null);
 
   const grade = studentInfo?.grade || 'Class 10';
   const subjects = Object.keys(syllabusData[grade] || syllabusData['Class 10']);
@@ -25,6 +26,13 @@ export default function Courses() {
   const openLesson = async (topic: string, subject: string) => {
     setSelectedTopic(topic);
     setActiveTopic(topic, subject);
+    
+    // Find video URL from syllabus
+    const subjectData = syllabusData[grade]?.[subject] || syllabusData['Class 10']?.[subject];
+    const unit = subjectData?.units.find((u: any) => u.topics.some((t: any) => (typeof t === 'string' ? t : t.name) === topic));
+    const topicObj = unit?.topics.find((t: any) => (typeof t === 'string' ? t : t.name) === topic);
+    setCurrentVideoUrl(typeof topicObj === 'object' ? topicObj.videoUrl || null : null);
+
     setIsLoadingLesson(true);
     setLessonContent('');
     try {
@@ -161,15 +169,40 @@ export default function Courses() {
                     </article>
 
                     {/* YouTube Video Section */}
-                    <div className="bg-white/5 border border-white/10 rounded-[3rem] p-10">
-                      <div className="flex items-center gap-4 mb-8">
-                        <PlayCircle className="w-10 h-10 text-primary" />
-                        <h4 className="text-3xl font-black text-white">Watch & Learn</h4>
+                    {currentVideoUrl ? (
+                      <div className="bg-white/5 border border-white/10 rounded-[3rem] p-10">
+                        <div className="flex items-center gap-4 mb-8">
+                          <PlayCircle className="w-10 h-10 text-primary" />
+                          <h4 className="text-3xl font-black text-white">Watch & Learn</h4>
+                        </div>
+                        <div className="aspect-video w-full rounded-3xl overflow-hidden bg-black border border-white/10 shadow-2xl">
+                          <iframe 
+                            width="100%" 
+                            height="100%" 
+                            src={currentVideoUrl} 
+                            frameBorder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          ></iframe>
+                        </div>
                       </div>
-                      <div className="aspect-video w-full rounded-3xl overflow-hidden bg-black border border-white/10 shadow-2xl">
-                        <iframe width="100%" height="100%" src={`https://www.youtube.com/embed?listType=search&list=NCERT+10th+${encodeURIComponent(selectedSubject || '')}+${encodeURIComponent(selectedTopic || '')}`} frameBorder="0" allowFullScreen></iframe>
+                    ) : (
+                      <div className="bg-white/5 border border-white/10 rounded-[3rem] p-10">
+                        <div className="flex items-center gap-4 mb-8">
+                          <PlayCircle className="w-10 h-10 text-primary" />
+                          <h4 className="text-3xl font-black text-white">Search for Video</h4>
+                        </div>
+                        <div className="aspect-video w-full rounded-3xl overflow-hidden bg-black border border-white/10 shadow-2xl">
+                          <iframe 
+                            width="100%" 
+                            height="100%" 
+                            src={`https://www.youtube.com/embed?listType=search&list=NCERT+10th+${encodeURIComponent(selectedSubject || '')}+${encodeURIComponent(selectedTopic || '')}`} 
+                            frameBorder="0" 
+                            allowFullScreen
+                          ></iframe>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
               </div>

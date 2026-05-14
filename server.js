@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Fix for ENOTFOUND on local machines
-dns.setServers(['8.8.8.8', '8.8.4.4']);
+// Fix for ENOTFOUND on local machines - removed as direct connection is now used
 
 dotenv.config();
 
@@ -29,8 +29,10 @@ app.use(express.static(path.join(__dirname, 'dist')));
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI, {
-  serverSelectionTimeoutMS: 5000,
+  serverSelectionTimeoutMS: 30000,
   socketTimeoutMS: 45000,
+  family: 4, // Force IPv4 to avoid common DNS/timeout issues
+  connectTimeoutMS: 30000
 })
   .then(() => console.log('✅ Connected to MongoDB Atlas'))
   .catch(err => {

@@ -34,7 +34,13 @@ export const syllabusData: ClassSyllabusMap = {
         {
           name: "Number Systems",
           topics: [
-            { name: "Real Numbers", subtopics: ["Euclid's Division Lemma", "Fundamental Theorem of Arithmetic", "Irrational Numbers"], videoCount: 8, questionCount: 45 },
+            { 
+              name: "Real Numbers", 
+              subtopics: ["Euclid's Division Lemma", "Fundamental Theorem of Arithmetic", "Irrational Numbers"], 
+              videoCount: 8, 
+              questionCount: 45,
+              videoUrl: "https://www.youtube.com/embed/IakQ3khHxDE"
+            },
             { name: "Rational Numbers", subtopics: ["Properties", "Operations", "Decimal Representation"], videoCount: 6, questionCount: 32 }
           ]
         },
